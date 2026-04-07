@@ -1456,7 +1456,7 @@ def auto_set_backend_cli():
             args.noavx2 = True
             args.failsafe = True
 
-    if eligible_cuda and exitcounter < 100 and MaxMemory[0]>3500000000 and (("Use CUDA" in runopts and CUDevicesNames[0]!="") or "Use hipBLAS (ROCm)" in runopts) and any(CUDevicesNames):
+    if eligible_cuda and exitcounter < 100 and MaxMemory[0]>3500000000 and (("Use CUDA" in runopts and CUDevicesNames[0]!="" and any(CUDevicesNames)) or "Use hipBLAS (ROCm)" in runopts):
         if "Use CUDA" in runopts or "Use hipBLAS (ROCm)" in runopts:
             args.usecuda = ["normal","mmq"]
             print(f"Auto Selected CUDA Backend (flag={cpusupport})\n")
