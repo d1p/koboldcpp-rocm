@@ -1,5 +1,31 @@
 ##### Original ([llama.cpp rocm port](https://github.com/ggerganov/llama.cpp/pull/1087), [llama.cpp commit](https://github.com/ggerganov/llama.cpp/commit/6bbc598a632560cb45dd2c51ad403bda8723b629)) by SlyEcho, YellowRoseCx, ardfork, funnbot, Engininja2, Kerfuffle, jammm, and jdecourval.
 ##### Further modified and ported to KoboldCpp by YellowRoseCx.
+
+---
+
+> **This is a personal fork of [YellowRoseCx/koboldcpp-rocm](https://github.com/YellowRoseCx/koboldcpp-rocm).**
+> For the full-featured project with all backends (CUDA, Vulkan, CLBlast, CPU), please use the upstream fork linked above.
+
+## What this fork changes
+
+This fork targets a specific hardware setup and fixes a ROCm-only runtime issue:
+
+### Fix: hipBLAS auto-detection when `rocminfo` is not in PATH
+
+When running `koboldcpp_rocm.exe` (a PyInstaller bundle) with `--gpulayers` but without an explicit backend flag (`--usecuda`/`--usevulkan`), the auto-detection logic in `auto_set_backend_cli()` would fall through to "Default Backend" and crash because `koboldcpp_default.dll` is intentionally absent from the ROCm-only build.
+
+**Root cause:** The hipBLAS branch required `any(CUDevicesNames)` to be true, but `CUDevicesNames` is only populated by `rocminfo` — which is not available in the PyInstaller temp directory. GPU memory was already correctly detected via Vulkan (showing 16 GB+), but the name-based gate blocked hipBLAS selection.
+
+**Fix:** The `any(CUDevicesNames)` gate has been moved inside the CUDA-specific check only. The hipBLAS branch now correctly selects when `koboldcpp_hipblas.dll` exists and `MaxMemory > 3.5 GB`, regardless of whether `rocminfo` is accessible.
+
+**Workaround for existing builds (without rebuilding):** Pass `--usecuda` explicitly on the command line — this bypasses auto-detection and routes directly to `koboldcpp_hipblas.dll`.
+
+### gfx1101 single-target release
+
+Pre-built releases from this repo are compiled specifically for `gfx1101` (AMD Radeon RX 7800 XT, RDNA3 Navi 32) with ROCm 7.1. This produces a smaller, faster binary compared to the upstream multi-arch build targeting a dozen GPU variants.
+
+---
+
 # koboldcpp-ROCM for AMD
 ### Features
 - Single file executable, with no installation required and no external dependencies
